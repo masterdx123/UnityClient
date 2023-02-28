@@ -12,14 +12,13 @@ public class NetworkGameObject : MonoBehaviour
 
     private void Awake()
     {
-        localID = lastAssignedLocalID++;
+        if (isLocallyOwned) localID = lastAssignedLocalID++;
     }
-
     public byte[] toPacket() //convert the relevant info on the gameobject to a packet
     {
         //create a delimited string with the required data
         //note if we put strings in this we might want to check they don’t have a semicolon or use a different delimiter like |
-        string returnVal = uniqueNetworkID + ";" +
+        string returnVal = "Object data;" + uniqueNetworkID + ";" +
                             transform.position.x + ";" +
                             transform.position.y + ";" +
                             transform.position.z + ";" +
@@ -31,11 +30,11 @@ public class NetworkGameObject : MonoBehaviour
         return Encoding.ASCII.GetBytes(returnVal);
     }
 
-    public void fromPacket(byte[] packet) //convert a packet to the relevant data and apply it to the gameobject properties
+    public void fromPacket(string packet) //convert a packet to the relevant data and apply it to the gameobject properties
     {
-        string data = Encoding.ASCII.GetString(packet);
-        string[] values = data.Split(';');
-        transform.position = new Vector3(Int32.Parse(values[1]), Int32.Parse(values[2]), Int32.Parse(values[3]));
-        transform.rotation = new Quaternion(Int32.Parse(values[4]), Int32.Parse(values[5]), Int32.Parse(values[6]), Int32.Parse(values[7]));
+        string[] values = packet.Split(';');
+        transform.position = new Vector3(float.Parse(values[2]), float.Parse(values[3]), float.Parse(values[4]));
+        transform.rotation = new Quaternion(float.Parse(values[5]), float.Parse(values[6]), float.Parse(values[7]), float.Parse(values[8]));
     }
+    
 }
