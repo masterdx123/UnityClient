@@ -19,12 +19,12 @@ public class NetworkGameObject : MonoBehaviour
         //create a delimited string with the required data
         //note if we put strings in this we might want to check they don’t have a semicolon or use a different delimiter like |
         string returnVal = "Object data;" + uniqueNetworkID + ";" +
-                            transform.position.x + ";" +
-                            transform.position.y + ";" +
-                            transform.position.z + ";" +
+                            transform.position.x * 100 + ";" +
+                            transform.position.z * -100 + ";" +
+                            transform.position.y * 100 + ";" +
                             transform.rotation.x + ";" +
-                            transform.rotation.y + ";" +
                             transform.rotation.z + ";" +
+                            transform.rotation.y + ";" +
                             transform.rotation.w + ";"
                             ;
         return Encoding.ASCII.GetBytes(returnVal);
@@ -33,8 +33,8 @@ public class NetworkGameObject : MonoBehaviour
     public void fromPacket(string packet) //convert a packet to the relevant data and apply it to the gameobject properties
     {
         string[] values = packet.Split(';');
-        transform.position = new Vector3(float.Parse(values[2]), float.Parse(values[3]), float.Parse(values[4]));
-        transform.rotation = new Quaternion(float.Parse(values[5]), float.Parse(values[6]), float.Parse(values[7]), float.Parse(values[8]));
+        transform.position = new Vector3(float.Parse(values[2]) / 100, float.Parse(values[4]) / 100, float.Parse(values[3]) / -100);
+        transform.rotation = new Quaternion(float.Parse(values[5]), float.Parse(values[7]), float.Parse(values[6]), float.Parse(values[8]));
     }
     
 }

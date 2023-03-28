@@ -7,7 +7,6 @@ using System.Text;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
-using Unity.UI;
 using UnityEngine.UI;
 using TMPro;
 using System.Net.Http.Headers;
@@ -41,7 +40,7 @@ public class NetworkManager : MonoBehaviour
     //string ipAdress = "10.1.42.129";
     //string ipAdress = "10.1.229.232"; //lucas
     //string ipAdress = "10.1.17.235"; //miguel
-    string ipAdress = "10.1.119.207"; //Tiago
+    string ipAdress = "100.76.113.7"; //Tiago
     //string ipAdress = "10.1.109.253"; //Oscar
 
     // Start is called before the first frame update
@@ -189,7 +188,7 @@ public class NetworkManager : MonoBehaviour
                         //if it's unique ID matches the packet, update it's position from the packet
                         if (ngo.uniqueNetworkID == GetGlobalIDFromPacket(previousRecieveString) || ngo.uniqueNetworkID == 0)
                         {
-                            //only update it if we don't own it - you might want to try disabling and seeing the effect
+                            //only update it if we don't own it 
                             if (!ngo.isLocallyOwned)
                             {
                                 ngo.fromPacket(previousRecieveString);
