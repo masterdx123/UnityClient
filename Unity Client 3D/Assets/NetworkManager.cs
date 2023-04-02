@@ -40,7 +40,7 @@ public class NetworkManager : MonoBehaviour
     //string ipAdress = "10.1.42.129";
     //string ipAdress = "10.1.229.232"; //lucas
     //string ipAdress = "10.1.17.235"; //miguel
-    string ipAdress = "100.76.113.26"; //Tiago
+    string ipAdress = "100.76.113.20"; //Tiago
     //string ipAdress = "10.1.109.253"; //Oscar
 
     // Start is called before the first frame update
