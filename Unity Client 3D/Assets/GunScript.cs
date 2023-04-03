@@ -1,32 +1,43 @@
+using System.Text;
 using Unity.VisualScripting;
+using UnityEditor.PackageManager;
 using UnityEngine;
+
+
 
 public class GunScript : MonoBehaviour
 {
-    public float dmg = 0;
-    public float range = 0;
+    int dmg = 10;
+    float range = 30;
 
     public Camera cam;
-
+    static public NetworkGameObject netObject;
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
             Shoot();
+            
         }
     }
 
     void Shoot()
     {
         RaycastHit hit;
-
+        
         if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit , range))
         {
-            Debug.Log(hit.transform.name);
+            Debug.Log("inRange");
+            
 
-            NetworkGameObject netObject = hit.transform.GetComponent<NetworkGameObject>();
+            netObject = hit.transform.GetComponent<NetworkGameObject>();
             if (netObject != null)
             {
+
+                string losHP = "lose hp;" + netObject.uniqueNetworkID + ";" + dmg + ";";
+                byte[] HPData = Encoding.ASCII.GetBytes(losHP);
+                NetworkManager.client.Send(HPData, HPData.Length);
+
                 Debug.Log(netObject.transform.name);
             }
         }

@@ -23,7 +23,7 @@ public class NetworkManager : MonoBehaviour
     }
 
     //System.Diagnostics.Stopwatch pingTimer = new System.Diagnostics.Stopwatch();
-    static UdpClient client;
+    static public UdpClient client;
     static IPEndPoint ep;
     static UdpState state;
     //TimeSpan timer = new TimeSpan();
@@ -36,12 +36,7 @@ public class NetworkManager : MonoBehaviour
 
     public string receiveString="";
 
-    //string ipAdress = "127.0.0.1";
-    //string ipAdress = "10.1.42.129";
-    //string ipAdress = "10.1.229.232"; //lucas
-    //string ipAdress = "10.1.17.235"; //miguel
-    string ipAdress = "100.76.113.20"; //Tiago
-    //string ipAdress = "10.1.109.253"; //Oscar
+    string ipAdress = "100.76.113.2"; 
 
     // Start is called before the first frame update
     void Start()
@@ -74,7 +69,7 @@ public class NetworkManager : MonoBehaviour
 
         byte[] receiveBytes = client.EndReceive(result, ref ep); //get the packet
         receiveString = Encoding.ASCII.GetString(receiveBytes); //decode the packet
-        Debug.Log("Received " + receiveString + " from " + ep.ToString()); //display the packet
+        //Debug.Log("Received " + receiveString + " from " + ep.ToString()); //display the packet
 
         if (receiveString.Contains("Assigned UID:"))
         {
@@ -223,6 +218,23 @@ public class NetworkManager : MonoBehaviour
                     }
                 }
 
+            }
+
+            if (previousRecieveString.Contains("Id:;"))
+            {
+                    //for every networked gameobject in the world
+                foreach (NetworkGameObject ngo in worldState)
+                {
+
+                    if (ngo.uniqueNetworkID == GetGlobalIDFromPacket(previousRecieveString) || ngo.uniqueNetworkID == 0)
+                    {
+                        ngo.ChangeHp(previousRecieveString);
+                    }
+
+                }
+                    //guardar num int o id que perdeu vida
+                    //fazer um loop por todos os network gameobjects e se o id for o mm que o recebido
+                    //atualizar o hp
             }
 
             //wait until the incoming string with packet data changes then iterate again
