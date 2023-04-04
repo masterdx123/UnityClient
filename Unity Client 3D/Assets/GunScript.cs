@@ -1,6 +1,4 @@
 using System.Text;
-using Unity.VisualScripting;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 
@@ -13,7 +11,8 @@ public class GunScript : MonoBehaviour
     public Camera cam;
     static public NetworkGameObject netObject;
     void Update()
-    {
+    { 
+        //Id mouse left was clicked
         if (Input.GetMouseButtonDown(0))
         {
             Shoot();
@@ -25,11 +24,13 @@ public class GunScript : MonoBehaviour
     {
         RaycastHit hit;
         
+        //perfrom a raycast forward from the player position to hit a tasrget at a certain range
         if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit , range))
         {
             Debug.Log("inRange");
             
 
+            //if the object hit is a network gameobject than send an information to the server for that player to lose hp
             netObject = hit.transform.GetComponent<NetworkGameObject>();
             if (netObject != null)
             {

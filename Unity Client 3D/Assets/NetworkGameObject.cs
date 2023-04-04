@@ -3,23 +3,31 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using System;
+using UnityEngine.UI;
+using TMPro;
+
 public class NetworkGameObject : MonoBehaviour
 {
     [SerializeField] public bool isLocallyOwned;
     [SerializeField] public int uniqueNetworkID;
     [SerializeField] public int localID;
     [SerializeField] public int HP = 100;
+    public TextMeshProUGUI HpText;
     static int lastAssignedLocalID = 0;
 
     private void Awake()
     {
+        //assign local id
         if (isLocallyOwned) localID = lastAssignedLocalID++;
+
+        if (isLocallyOwned)
+            HpText.text = "Hp: 100";
     }
     public byte[] toPacket() //convert the relevant info on the gameobject to a packet
     {
         string a = gameObject.name;
-        //create a delimited string with the required data
-        //note if we put strings in this we might want to check they don’t have a semicolon or use a different delimiter like |
+        //return a string with all the object data to the server
+       
         string returnVal = "Object data;" + uniqueNetworkID + ";" +
                             transform.position.x * 100 + ";" +
                             transform.position.z * -100 + ";" +
@@ -40,12 +48,13 @@ public class NetworkGameObject : MonoBehaviour
         transform.rotation = new Quaternion(float.Parse(values[5]), float.Parse(values[7]), float.Parse(values[6]), float.Parse(values[8]));
     }
 
-    public void ChangeHp(string packet)
+    public void ChangeHp(string packet) //change the hp of the object when taking dmg
     {
         string[] values = packet.Split(';');
         int dmg = int.Parse(values[2]);
         HP -= dmg;
         Debug.Log(this.uniqueNetworkID + "/" + this.HP);
+        HpText.text = "Hp: " + HP;
     }
 
 }

@@ -1,18 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Net.Http.Headers;
-using UnityEngine.Rendering;
-using System.Net.NetworkInformation;
-//using System.Diagnostics;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -22,11 +18,9 @@ public class NetworkManager : MonoBehaviour
         public IPEndPoint e;
     }
 
-    //System.Diagnostics.Stopwatch pingTimer = new System.Diagnostics.Stopwatch();
     static public UdpClient client;
     static IPEndPoint ep;
     static UdpState state;
-    //TimeSpan timer = new TimeSpan();
     public TextMeshProUGUI txt;
 
     [SerializeField] GameObject networkAvatar;
@@ -34,50 +28,46 @@ public class NetworkManager : MonoBehaviour
     List<NetworkGameObject> netObjects;
     public List<NetworkGameObject> worldState;
 
-    public string receiveString="";
+    public string receiveString = "";
 
-    string ipAdress = "100.76.113.2"; 
+    string ipAddress = "100.76.113.15";
 
-    // Start is called before the first frame update
     void Start()
     {
-
         netObjects = new List<NetworkGameObject>();
         netObjects.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
         worldState = new List<NetworkGameObject>();
         worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
-
         client = new UdpClient();
-        IPEndPoint ep = new IPEndPoint(IPAddress.Parse(ipAdress), 9050); // endpoint where server is listening (testing localy)
+        ep = new IPEndPoint(IPAddress.Parse(ipAddress), 9050);
         client.Connect(ep);
+
+        state = new UdpState();
+        state.u = client;
+        state.e = ep;
 
         string myMessage = "FirstEntrance";
         byte[] array = Encoding.ASCII.GetBytes(myMessage);
         client.Send(array, array.Length);
-        
-        client.BeginReceive(ReceiveAsyncCallback, state);        
-        
+
+        client.BeginReceive(ReceiveAsyncCallback, state);
+
         RequestUIDs();
         StartCoroutine(SendNetworkUpdates());
         StartCoroutine(updateWorldState());
-        
     }
+
     void ReceiveAsyncCallback(IAsyncResult result)
     {
-
-        byte[] receiveBytes = client.EndReceive(result, ref ep); //get the packet
-        receiveString = Encoding.ASCII.GetString(receiveBytes); //decode the packet
-        //Debug.Log("Received " + receiveString + " from " + ep.ToString()); //display the packet
+        byte[] receiveBytes = client.EndReceive(result, ref ep);
+        receiveString = Encoding.ASCII.GetString(receiveBytes);
 
         if (receiveString.Contains("Assigned UID:"))
         {
-
             int parseFrom = receiveString.IndexOf(':');
             int parseTo = receiveString.LastIndexOf(';');
-
-            //we need to parse the string from the server back into ints to work with
             int localID = Int32.Parse(betweenStrings(receiveString, ":", ";"));
             int globalID = Int32.Parse(receiveString.Substring(receiveString.IndexOf(";") + 1));
 
@@ -85,27 +75,19 @@ public class NetworkManager : MonoBehaviour
 
             foreach (NetworkGameObject netObject in netObjects)
             {
-                //if the local ID sent by the server matches this game object
                 if (netObject.localID == localID)
                 {
-                    //Debug.Log(localID + " : " + globalID);
-                    //the global ID becomes the server-provided value
                     netObject.uniqueNetworkID = globalID;
                 }
             }
         }
 
-        client.BeginReceive(ReceiveAsyncCallback, state); //self-callback, meaning this loops infinitely
-        string myMessage2 =   "" /*"PlayerName: " + playerName + " / Ping: " + timer.Milliseconds*/ ;
-        byte[] array2 = Encoding.ASCII.GetBytes(myMessage2);
-        client.Send(array2, array2.Length);
+        client.BeginReceive(ReceiveAsyncCallback, state);
     }
-
-
     // Update is called once per frame
     void Update()
     {
-        //txt.text = "Ping: " + timer.Milliseconds;
+       
     }
 
     void RequestUIDs()
@@ -148,7 +130,7 @@ public class NetworkManager : MonoBehaviour
                 }
             }
 
-            yield return new WaitForEndOfFrame();
+            yield return new WaitForSeconds(0.8f);
         }
     }
 
@@ -165,10 +147,26 @@ public class NetworkManager : MonoBehaviour
             worldState = new List<NetworkGameObject>();
             worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
-            //cache the recieved packet string - we'll use that later to suspend the couroutine until it changes
+           
             string previousRecieveString = receiveString;
+            
+            
 
-            //if it's an object update, process it, otherwise skip
+            if (previousRecieveString.Contains("Id:;"))
+            {
+                Debug.Log("got it");
+                    //for every networked gameobject in the world
+                foreach (NetworkGameObject ngo in worldState)
+                {
+
+                    if (ngo.uniqueNetworkID == GetGlobalIDFromPacket(previousRecieveString) || ngo.uniqueNetworkID == 0)
+                    {
+                        ngo.ChangeHp(previousRecieveString);
+                    }
+
+                }
+                    
+            }
             if (previousRecieveString.Contains("Object data;"))
             {
                 //we'll want to know if an object with this global id is already in the game world
@@ -200,7 +198,7 @@ public class NetworkManager : MonoBehaviour
                     {
                         int idOfNewObject = GetGlobalIDFromPacket(previousRecieveString);
                         bool isObjectAlreadyInstantiated = false;
-                        for(int i = 0; i < worldState.Count; i++)
+                        for (int i = 0; i < worldState.Count; i++)
                         {
                             if (worldState[i].uniqueNetworkID == idOfNewObject)
                             {
@@ -208,8 +206,8 @@ public class NetworkManager : MonoBehaviour
                             }
                         }
 
-                        if(!isObjectAlreadyInstantiated)
-                        { 
+                        if (!isObjectAlreadyInstantiated)
+                        {
                             GameObject otherPlayerAvatar = Instantiate(networkAvatar);
                             //update its component properties from the packet
                             otherPlayerAvatar.GetComponent<NetworkGameObject>().uniqueNetworkID = GetGlobalIDFromPacket(previousRecieveString);
@@ -220,26 +218,12 @@ public class NetworkManager : MonoBehaviour
 
             }
 
-            if (previousRecieveString.Contains("Id:;"))
-            {
-                    //for every networked gameobject in the world
-                foreach (NetworkGameObject ngo in worldState)
-                {
-
-                    if (ngo.uniqueNetworkID == GetGlobalIDFromPacket(previousRecieveString) || ngo.uniqueNetworkID == 0)
-                    {
-                        ngo.ChangeHp(previousRecieveString);
-                    }
-
-                }
-                    //guardar num int o id que perdeu vida
-                    //fazer um loop por todos os network gameobjects e se o id for o mm que o recebido
-                    //atualizar o hp
-            }
-
-            //wait until the incoming string with packet data changes then iterate again
-
-            yield return new WaitUntil(() => !receiveString.Equals(previousRecieveString));
+            //wait until the endOfFrame if the udp available equals 0
+            if (state.u.Available == 0)
+                yield return new WaitForEndOfFrame();
+           
+            
+            
         }
     }    
 
