@@ -30,16 +30,19 @@ public class NetworkManager : MonoBehaviour
 
     public string receiveString = "";
 
-    string ipAddress = "100.76.113.15";
+    string ipAddress = "25.53.60.215";
 
     void Start()
     {
+        //create list of netobjects and find them in the scene
         netObjects = new List<NetworkGameObject>();
         netObjects.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
+        //do the same for the worldstate
         worldState = new List<NetworkGameObject>();
         worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
+        //assign client endpoint and connect it
         client = new UdpClient();
         ep = new IPEndPoint(IPAddress.Parse(ipAddress), 9050);
         client.Connect(ep);
@@ -48,22 +51,26 @@ public class NetworkManager : MonoBehaviour
         state.u = client;
         state.e = ep;
 
+        //give a message to the server for the first connection
         string myMessage = "FirstEntrance";
         byte[] array = Encoding.ASCII.GetBytes(myMessage);
         client.Send(array, array.Length);
 
         client.BeginReceive(ReceiveAsyncCallback, state);
 
+        
         RequestUIDs();
         StartCoroutine(SendNetworkUpdates());
         StartCoroutine(updateWorldState());
     }
 
+    //Receive messages from the server
     void ReceiveAsyncCallback(IAsyncResult result)
     {
         byte[] receiveBytes = client.EndReceive(result, ref ep);
         receiveString = Encoding.ASCII.GetString(receiveBytes);
 
+        //if message from server is to assign Ids
         if (receiveString.Contains("Assigned UID:"))
         {
             int parseFrom = receiveString.IndexOf(':');
@@ -73,6 +80,7 @@ public class NetworkManager : MonoBehaviour
 
             Debug.Log("Got assignment: " + localID + " local to: " + globalID + " global");
 
+            //transform local ids in the client into global ids provided from the server
             foreach (NetworkGameObject netObject in netObjects)
             {
                 if (netObject.localID == localID)
@@ -82,6 +90,7 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
+        //Re call the function
         client.BeginReceive(ReceiveAsyncCallback, state);
     }
     // Update is called once per frame
@@ -90,6 +99,7 @@ public class NetworkManager : MonoBehaviour
        
     }
 
+    //function to request ids from the server to assign the objects with global ids
     void RequestUIDs()
     {
         netObjects = new List<NetworkGameObject>();
@@ -130,7 +140,7 @@ public class NetworkManager : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(0.8f);
+            yield return new WaitForSeconds(0.1f);
         }
     }
 
